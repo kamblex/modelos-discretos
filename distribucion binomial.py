@@ -1,21 +1,22 @@
-from flask import Flask , render_template , request
+from flask import Flask, render_template, request
 import numpy as np
-from scipy . stats import binom
-app = Flask ( __name__ )
+from scipy.stats import poisson
 
-@app . route (’/’)
-def index () :
-return render_template (’index . html ’)
-@app . route (’/ calculate ’, methods =[ ’POST ’])
-def calculate () :
-n = int( request . form [’n’])
-p = float ( request . form [’p’])
-x = int( request . form [’x’])
+app = Flask(__name__)
 
-# Calcular la probabilidad binomial
-probability = binom . pmf (x , n , p )
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-return render_template (’result . html ’, probability = probability )
+@app.route('/calculate', methods=['POST'])
+def calculate():
+    lmbda = float(request.form['lambda'])
+    k = int(request.form['k'])
 
-if __name__ == ’__main__ ’:
-app . run ( debug = True )
+    # Calcular la probabilidad de k eventos
+    probability = poisson.pmf(k, lmbda)
+
+    return render_template('result.html', probability=probability)
+
+if __name__ == '__main__':
+    app.run(debug=True)
