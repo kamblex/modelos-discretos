@@ -1,0 +1,106 @@
+import streamlit as st
+import numpy as np
+from scipy.stats import binom, poisson
+
+st.set_page_config(page_title="Calculadoras y Simuladores Estadísticos")
+
+def value_iteration(P, R, gamma=0.9, epsilon=1e-6):
+    n_states = P.shape[0]
+    V = np.zeros(n_states)
+    while True:
+        V_new = np.zeros(n_states)
+        for s in range(n_states):
+            Q_values = np.zeros(n_states)
+            for a in range(n_states):
+                Q_values[a] = R[s, a] + gamma * np.dot(P[s, a, :], V)
+            V_new[s] = np.max(Q_values)
+        if np.max(np.abs(V_new - V)) < epsilon:
+            break
+        V = V_new
+    return V
+
+class Agent:
+    def __init__(self):
+        pass
+
+    def act(self, environment):
+        return np.random.rand()
+
+class Environment:
+    def __init__(self):
+        self.state = np.zeros(10)
+
+    def update(self, agent_actions):
+        for action in agent_actions:
+            self.state += action
+
+    def get_state(self):
+        return self.state
+
+def simulate_multiagent_system(num_agents, num_steps):
+    agents = [Agent() for _ in range(num_agents)]
+    environment = Environment()
+    for step in range(num_steps):
+        agent_actions = [agent.act(environment) for agent in agents]
+        environment.update(agent_actions)
+    return environment.get_state()
+
+def main():
+    st.title("Calculadoras y Simuladores Estadísticos")
+    
+    option = st.selectbox("Seleccione una opción", ["Calculadora de Distribución Binomial", "Simulador de Cadena de Markov", "Proceso de Decisión de Markov", "Simulador de Sistema Multiagente", "Calculadora de Distribución de Poisson"])
+    
+    if option == "Calculadora de Distribución Binomial":
+        st.header("Calculadora de Distribución Binomial")
+        n = st.number_input("Número de intentos (n)", min_value=1, step=1)
+        p = st.number_input("Probabilidad de éxito (p)", min_value=0.0, max_value=1.0, step=0.01)
+        x = st.number_input("Número de éxitos (x)", min_value=0, max_value=n, step=1)
+        if st.button("Calcular Probabilidad Binomial"):
+            prob = binom.pmf(x, n, p)
+            st.write(f"La probabilidad de obtener {x} éxitos en {n} intentos con una probabilidad de éxito de {p} es: {prob:.4f}")
+    
+    elif option == "Simulador de Cadena de Markov":
+        num_estados = st.number_input("Número de estados", min_value=2, step=1)
+        matriz_transicion = st.text_area("Ingrese la matriz de transición (separada por comas)").split(",")
+        estado_inicial = st.number_input("Estado inicial", min_value=0, max_value=num_estados-1, step=1)
+        n_pasos = st.number_input("Número de pasos", min_value=1, step=1)
+        if st.button("Simular Cadena de Markov"):
+            matriz_transicion = np.array([float(x) for x in matriz_transicion]).reshape(num_estados, num_estados)
+            probabilidades = np.linalg.matrix_power(matriz_transicion, n_pasos)[estado_inicial]
+            st.write("Probabilidades después de", n_pasos, "pasos:")
+            for i in range(num_estados):
+                st.write(f"Estado {i}: {probabilidades[i]:.4f}")
+    
+    elif option == "Proceso de Decisión de Markov":
+        st.header("Proceso de Decisión de Markov")
+        num_estados = st.number_input("Número de estados", min_value=1, step=1)
+        P = np.array([st.text_area(f"Ingrese la matriz de transición para el estado {s} (separada por comas)").split(",") for s in range(num_estados)])
+        P = np.array([np.array([float(p) for p in row]).reshape(num_estados, num_estados) for row in P])
+        R = np.array([st.text_area(f"Ingrese la matriz de recompensas para el estado {s} (separada por comas)").split(",") for s in range(num_estados)])
+        R = np.array([np.array([float(r) for r in row]).reshape(num_estados) for row in R])
+        gamma = st.number_input("Factor de descuento (gamma)", min_value=0.0, max_value=1.0, value=0.9, step=0.1)
+        if st.button("Calcular Valores de Estado"):
+            V = value_iteration(P, R, gamma)
+            st.write("Valores de Estado:")
+            for s in range(num_estados):
+                st.write(f"Estado {s}: {V[s]:.4f}")
+    
+    elif option == "Simulador de Sistema Multiagente":
+        st.header("Simulador de Sistema Multiagente")
+        num_agents = st.number_input("Número de agentes", min_value=1, step=1)
+        num_steps = st.number_input("Número de pasos", min_value=1, step=1)
+        if st.button("Simular Sistema Multiagente"):
+            final_state = simulate_multiagent_system(num_agents, num_steps)
+            st.write("Estado final del sistema:")
+            st.write(final_state)
+    
+    elif option == "Calculadora de Distribución de Poisson":
+        st.header("Calculadora de Distribución de Poisson")
+        lambda_val = st.number_input("Promedio de eventos (λ)", min_value=0.0, step=0.1)
+        k = st.number_input("Número de eventos (k)", min_value=0, step=1)
+        if st.button("Calcular Probabilidad de Poisson"):
+            prob = poisson.pmf(k, lambda_val)
+            st.write(f"La probabilidad de que ocurran {k} eventos con un promedio de {lambda_val} es: {prob:.4f}")
+
+if __name__ == "__main__":
+    main()
